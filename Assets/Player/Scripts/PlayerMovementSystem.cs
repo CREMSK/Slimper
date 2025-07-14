@@ -1,79 +1,90 @@
+using System;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovementSystem : MonoBehaviour
 {
-    [SerializeField] private Transform contactIndicator;
+    // player components
+    private Rigidbody2D playerRigidBody_;
+    private Transform playerTransform;
 
-    private Rigidbody2D rigidBody_;
-    private float charge_ = 0f;
-    private bool isGrounded_ = false;
+    // used properties
+    private float charge_
+    {
+        get{ return charge_; }
+        set
+        {
+            charge_ = value;
+            onChargeUpdate?.Invoke((int)math.round(value * 10) + 2);
+        } 
+    }
+    private bool isGrounded_{
+        get{ return isGrounded_; }
+        set
+        {
+            isGrounded_ = value;
+            onGroundedUpdate?.Invoke(value);
+        } 
+    }
     private Vector2 contactPoint_;
+
+    // setting properties
     private float maxJumpAngle_ = 70f;
 
-    // UNITY FUNCTIONS
-    void Awake()
-    {
-        rigidBody_ = GetComponent<Rigidbody2D>();
-    }
-        void OnCollisionEnter2D(Collision2D collision)
-    {
+    // events
+    public event Action<int> onChargeUpdate;
+    public event Action<bool> onGroundedUpdate;
+
+
+
+    // collision functions
+    void OnCollisionEnter2D(Collision2D collision)
+    {   
         isGrounded_ = true;
 
-        rigidBody_.linearVelocity = new Vector2(0, 0);
-        rigidBody_.gravityScale = 0;
+        playerRigidBody_.linearVelocity = new Vector2(0, 0);
+        playerRigidBody_.gravityScale = 0;
     }
     void OnCollisionStay2D(Collision2D collision)
     {
         contactPoint_ = collision.GetContact(0).point;
-
-        if (contactIndicator != null)
-        {
-            contactIndicator.transform.position = contactPoint_;
-        }
     }
     void OnCollisionExit2D(Collision2D collision)
     {
         isGrounded_ = false;
-        rigidBody_.gravityScale = 2;
+        playerRigidBody_.gravityScale = 2;
     }
 
     // JUMP FUNCTIONS
-    public void StartJump(InputAction.CallbackContext context)
+    public void StartCharge(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            StartCoroutine("increaseCharge");
-            return;
-        }
-        if (context.canceled)
-        {
-            StopCoroutine("increaseCharge");
-
-            rigidBody_.simulated = true;
-            Jump(charge_);
-
-            charge_ = 0;
-            return;
-        }
+        StartCoroutine("increaseCharge");
     }
-        private void Jump(float charge)
-    {
-        var jumpVec = GetJumpAngle();
-        charge = math.round(charge * 10) + 2;
+    public void Jump(InputAction.CallbackContext context)
+    {   
+        StopCoroutine("increaseCharge");
+        var charge = math.round(charge_ * 10) + 2;
+        charge_ = 0;
 
-        rigidBody_.AddForce(jumpVec * charge, ForceMode2D.Impulse);
+        if (!isGrounded_)
+        {
+            return;
+        }
+        var jumpVec = GetJumpAngle();
+        playerRigidBody_.AddForce(jumpVec * charge, ForceMode2D.Impulse);
     }
     private IEnumerator increaseCharge()
     {
         while (true)
         {
-            if (isGrounded_)
+            if (!isGrounded_)
             {
-                charge_ = math.clamp(charge_ + Time.deltaTime * 2, 0, 1);
+                yield return null;
             }
+
+            charge_ = math.clamp(charge_ + Time.deltaTime * 2, 0, 1);
             yield return null;
         }
     }
@@ -112,8 +123,4 @@ public class PlayerMovement : MonoBehaviour
         Vector2 clampedDir = clampedUp * normal + clampedAlong * tangent;
         return clampedDir.normalized;
     }
-
-
-
-
 }
