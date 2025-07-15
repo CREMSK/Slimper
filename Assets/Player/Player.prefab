@@ -87,7 +87,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
+  m_SpriteSortPoint: 1
 --- !u!95 &577937422883290899
 Animator:
   serializedVersion: 7
@@ -161,6 +161,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerRigidBody_: {fileID: 7452843178469072786}
   playerAnimator_: {fileID: 577937422883290899}
+  playerSpriteTransform_: {fileID: 1577863031649256785}
   playerMovementSystem_: {fileID: 6058613316899623336}
   playerAnimationSystem_: {fileID: 7001186306475025204}
 --- !u!114 &6058613316899623336

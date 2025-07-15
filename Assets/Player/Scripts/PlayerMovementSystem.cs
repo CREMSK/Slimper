@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.Burst;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -75,7 +76,6 @@ public class PlayerMovementSystem : MonoBehaviour
     public event Action<bool> onChargingUpdate;
     public event Action<Vector2> onContactPointUpdate;
     public event Action<Vector2> onPlayerJump;
-
 
     // collision functions
     void OnCollisionEnter2D(Collision2D collision)

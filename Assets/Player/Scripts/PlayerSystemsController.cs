@@ -4,6 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Rigidbody2D playerRigidBody_;
     [SerializeField] private Animator playerAnimator_;
+    [SerializeField] private Transform playerSpriteTransform_;
     [SerializeField] private PlayerMovementSystem playerMovementSystem_;
     [SerializeField] private PlayerAnimationSystem playerAnimationSystem_;
     private PlayerInputSystem playerInputSystem_;
@@ -16,6 +17,7 @@ public class PlayerController : MonoBehaviour
         {
             playerAnimationSystem_.PlayerAnimator = playerAnimator_;
             playerAnimationSystem_.PlayerTransform = transform;
+            playerAnimationSystem_.PlayerSpriteTransform = playerSpriteTransform_;
         }
         
         if (playerMovementSystem_ != null)
