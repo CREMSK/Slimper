@@ -61,7 +61,7 @@ public class PlayerController : MonoBehaviour
             playerMovementSystem_.onChargingUpdate -= playerAnimationSystem_.SetCharging;
             playerMovementSystem_.onContactPointUpdate -= playerAnimationSystem_.UpdateGroundedAngle;
             playerMovementSystem_.onPlayerJump -= playerAnimationSystem_.Jump;
-        }
+            }
 
         if (playerMovementSystem_ != null)
         {
