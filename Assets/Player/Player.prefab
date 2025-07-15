@@ -159,8 +159,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ab6ec1ec262ca5818fa5898144558d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerRigidBody_: {fileID: 0}
-  playerAnimator_: {fileID: 0}
+  playerRigidBody_: {fileID: 7452843178469072786}
+  playerAnimator_: {fileID: 577937422883290899}
   playerMovementSystem_: {fileID: 6058613316899623336}
   playerAnimationSystem_: {fileID: 7001186306475025204}
 --- !u!114 &6058613316899623336
@@ -187,9 +187,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfc027a17f9af55558555a7f159a655b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator_: {fileID: 0}
-  spriteRenderer_: {fileID: 0}
-  rigidbody_: {fileID: 0}
 --- !u!58 &4642456776684710949
 CircleCollider2D:
   m_ObjectHideFlags: 0

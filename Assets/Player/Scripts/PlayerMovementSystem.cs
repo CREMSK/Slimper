@@ -18,23 +18,26 @@ public class PlayerMovementSystem : MonoBehaviour
     }
 
     // used properties
+    private float rawCharge_;
     private float charge_
     {
         get
         {
-            return (int)math.round(charge_ * 10) + 2;
+            return rawCharge_;
         }
         set
         {
-            charge_ = value;
-            onChargeUpdate?.Invoke((int)math.round(value * 10) + 2);
+            rawCharge_ = value;
+            onChargeUpdate?.Invoke((int)math.round(value * (maxCharge_- minCharge_)) + minCharge_);
         }
     }
-    private bool isGrounded_{
-        get{ return isGrounded_; }
+    private bool _isGrounded;
+    private bool isGrounded_
+    {
+        get { return _isGrounded; }
         set
         {
-            isGrounded_ = value;
+            _isGrounded = value;
 
             if (value)
             {
@@ -47,39 +50,26 @@ public class PlayerMovementSystem : MonoBehaviour
             }
 
             onGroundedUpdate?.Invoke(value);
-        } 
-    }
-    private bool isCharging_{
-        get{ return isCharging_; }
-        set
-        {
-            isCharging_ = value;
-
-            if (value)
-            {
-                StartCoroutine("increaseCharge");
-            }
-            else
-            {
-                StopCoroutine("increaseCharge");
-                charge_ = 0;
-            }
-
-            onChargingUpdate?.Invoke(value);
-        } 
-    }
-    private Vector2 contactPoint_
-    {
-        get { return contactPoint_; }
-        set
-        {
-            contactPoint_ = value;
-            onContactPointUpdate?.Invoke(value);
         }
     }
 
+    private bool _isCharging;
+    private bool isCharging_
+    {
+        get { return _isCharging; }
+        set
+        {
+            _isCharging = value;
+            onChargingUpdate?.Invoke(value);
+        }
+    }
+
+    private Vector2 contactPoint_;
+
     // setting properties
     private float maxJumpAngle_ = 70f;
+    private int minCharge_ = 4;
+    private int maxCharge_ = 12;
 
     // events
     public event Action<int> onChargeUpdate;
@@ -96,7 +86,10 @@ public class PlayerMovementSystem : MonoBehaviour
     }
     void OnCollisionStay2D(Collision2D collision)
     {
-        contactPoint_ = collision.GetContact(0).point;
+        contactPoint_ = collision.GetContact(0).point;  
+
+        var normal = ((Vector2)transform.position - contactPoint_).normalized;
+        onContactPointUpdate?.Invoke(normal);
     }
     void OnCollisionExit2D(Collision2D collision)
     {
@@ -109,11 +102,15 @@ public class PlayerMovementSystem : MonoBehaviour
     public void StartJump()
     {
         isCharging_ = true;
+        StartCoroutine("increaseCharge");
     }
     public void Jump(Vector2 mouseWorldPosition)
     {
-        var charge = charge_;
+        var charge = (int)math.round(charge_ * (maxCharge_- minCharge_)) + minCharge_;
         isCharging_ = false;
+
+        StopCoroutine("increaseCharge");
+        charge_ = 0;
 
         if (!isGrounded_)
         {
