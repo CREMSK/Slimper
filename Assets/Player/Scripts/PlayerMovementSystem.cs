@@ -8,27 +8,75 @@ public class PlayerMovementSystem : MonoBehaviour
 {
     // player components
     private Rigidbody2D playerRigidBody_;
-    private Transform playerTransform;
+    public Rigidbody2D PlayerRigidBody
+    {
+        private get{ return playerRigidBody_; }
+        set
+        {
+            playerRigidBody_ = value;
+        }
+    }
 
     // used properties
     private float charge_
     {
-        get{ return charge_; }
+        get
+        {
+            return (int)math.round(charge_ * 10) + 2;
+        }
         set
         {
             charge_ = value;
             onChargeUpdate?.Invoke((int)math.round(value * 10) + 2);
-        } 
+        }
     }
     private bool isGrounded_{
         get{ return isGrounded_; }
         set
         {
             isGrounded_ = value;
+
+            if (value)
+            {
+                playerRigidBody_.linearVelocity = new Vector2(0, 0);
+                playerRigidBody_.gravityScale = 0;
+            }
+            else
+            {
+                playerRigidBody_.gravityScale = 2;
+            }
+
             onGroundedUpdate?.Invoke(value);
         } 
     }
-    private Vector2 contactPoint_;
+    private bool isCharging_{
+        get{ return isCharging_; }
+        set
+        {
+            isCharging_ = value;
+
+            if (value)
+            {
+                StartCoroutine("increaseCharge");
+            }
+            else
+            {
+                StopCoroutine("increaseCharge");
+                charge_ = 0;
+            }
+
+            onChargingUpdate?.Invoke(value);
+        } 
+    }
+    private Vector2 contactPoint_
+    {
+        get { return contactPoint_; }
+        set
+        {
+            contactPoint_ = value;
+            onContactPointUpdate?.Invoke(value);
+        }
+    }
 
     // setting properties
     private float maxJumpAngle_ = 70f;
@@ -36,16 +84,15 @@ public class PlayerMovementSystem : MonoBehaviour
     // events
     public event Action<int> onChargeUpdate;
     public event Action<bool> onGroundedUpdate;
-
+    public event Action<bool> onChargingUpdate;
+    public event Action<Vector2> onContactPointUpdate;
+    public event Action<Vector2> onPlayerJump;
 
 
     // collision functions
     void OnCollisionEnter2D(Collision2D collision)
     {   
         isGrounded_ = true;
-
-        playerRigidBody_.linearVelocity = new Vector2(0, 0);
-        playerRigidBody_.gravityScale = 0;
     }
     void OnCollisionStay2D(Collision2D collision)
     {
@@ -54,30 +101,33 @@ public class PlayerMovementSystem : MonoBehaviour
     void OnCollisionExit2D(Collision2D collision)
     {
         isGrounded_ = false;
-        playerRigidBody_.gravityScale = 2;
+        isCharging_ = false;
     }
 
+
     // JUMP FUNCTIONS
-    public void StartCharge(InputAction.CallbackContext context)
+    public void StartJump()
     {
-        StartCoroutine("increaseCharge");
+        isCharging_ = true;
     }
-    public void Jump(InputAction.CallbackContext context)
-    {   
-        StopCoroutine("increaseCharge");
-        var charge = math.round(charge_ * 10) + 2;
-        charge_ = 0;
+    public void Jump(Vector2 mouseWorldPosition)
+    {
+        var charge = charge_;
+        isCharging_ = false;
 
         if (!isGrounded_)
         {
             return;
         }
-        var jumpVec = GetJumpAngle();
-        playerRigidBody_.AddForce(jumpVec * charge, ForceMode2D.Impulse);
+
+        var jumpDirection = GetJumpDirection(mouseWorldPosition);
+        playerRigidBody_.AddForce(jumpDirection * charge, ForceMode2D.Impulse);
+
+        onPlayerJump?.Invoke(jumpDirection);
     }
     private IEnumerator increaseCharge()
     {
-        while (true)
+        while (isCharging_)
         {
             if (!isGrounded_)
             {
@@ -90,37 +140,34 @@ public class PlayerMovementSystem : MonoBehaviour
     }
 
     // HELPER FUNCTIONS
-    private Vector2 GetMouseVec()
-    {
-        Vector3 mousePos = Mouse.current.position.ReadValue();
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(mousePos);
-        Vector2 worldmpos = new Vector2(mouseWorldPos.x, mouseWorldPos.y);
 
-        Vector2 mvec = worldmpos - (Vector2)transform.position;
-        return mvec.normalized;
+    private Vector2 GetDirectionToMouse(Vector2 mouseWorldPosition)
+    {
+        var directionToMouse = mouseWorldPosition - (Vector2)transform.position;
+
+        return directionToMouse.normalized;
     }
-    private Vector2 GetJumpAngle()
+    private Vector2 GetJumpDirection(Vector2 mouseWorldPosition)
     {
-        Vector2 normal = ((Vector2)transform.position - contactPoint_).normalized;
-        Vector2 tangent = new Vector2(-normal.y, normal.x);
-        Vector2 mvec = GetMouseVec();
+        var directionToMouse = GetDirectionToMouse(mouseWorldPosition);
 
-        float up = Vector2.Dot(mvec, normal);
-        float along = Vector2.Dot(mvec, tangent);
+        var normal = ((Vector2)transform.position - contactPoint_).normalized;
+        var tangent = new Vector2(-normal.y, normal.x);
+
+        float up = Vector2.Dot(directionToMouse, normal);
+        float along = Vector2.Dot(directionToMouse, tangent);
 
         float angleCos = up / Mathf.Sqrt(up * up + along * along);
         float limitCos = Mathf.Cos(maxJumpAngle_ * Mathf.Deg2Rad);
 
         if (angleCos >= limitCos)
         {
-            return mvec;
+            return directionToMouse;
         }
 
-        float sign = Mathf.Sign(along);
-        float clampedUp = limitCos;
-        float clampedAlong = Mathf.Sin(maxJumpAngle_ * Mathf.Deg2Rad) * sign;
+        var clampedAlong = Mathf.Sin(maxJumpAngle_ * Mathf.Deg2Rad) * Mathf.Sign(along);
 
-        Vector2 clampedDir = clampedUp * normal + clampedAlong * tangent;
+        var clampedDir = limitCos * normal + clampedAlong * tangent;
         return clampedDir.normalized;
     }
 }

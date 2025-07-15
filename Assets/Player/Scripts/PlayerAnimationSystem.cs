@@ -3,50 +3,49 @@ using UnityEngine;
 
 public class PlayerAnimationSystem : MonoBehaviour
 {
-    [SerializeField] private Animator animator_;
-    [SerializeField] private SpriteRenderer spriteRenderer_;
-    [SerializeField] private Rigidbody2D rigidbody_;
-
-    private bool isGrounded_ = false;
-
-    public void Land(Vector2 velocity, Vector2 normal)
+    private Animator playerAnimator_;
+    private Transform playerTransform_;
+    
+    public Animator PlayerAnimator
     {
-        isGrounded_ = true;
-        animator_.SetBool("isGrounded", true);
-        animator_.SetFloat("velocity", velocity.magnitude);
-        var angle = Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg;
-
-        spriteRenderer_.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        private get { return playerAnimator_; }
+        set { playerAnimator_ = value; } 
+    }
+    public Transform PlayerTransform
+    {
+        private get { return playerTransform_; }
+        set { playerTransform_ = value; } 
     }
 
-    public void Hop(Vector2 dir)
+    public void SetCharging(bool isCharging)
     {
-        isGrounded_ = true;
-        var angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        spriteRenderer_.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
-
-        animator_.SetBool("isCharging", false);
-        animator_.SetBool("isGrounded", false);
+        playerAnimator_.SetBool("isCharging", isCharging);
     }
 
-    public void Charge()
+    public void SetGrounded(bool isGrounded)
     {
-        animator_.SetBool("isCharging", true);
+        playerAnimator_.SetBool("isGrounded", isGrounded);
+        StopCoroutine("keepJumpAngle");
     }
 
-    public void Jump(Vector2 dir, Vector2 vel)
-    {
-        isGrounded_ = false;
-        var angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        spriteRenderer_.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
-
-        animator_.SetBool("isCharging", false);
-        animator_.SetBool("isGrounded", false);
-    }
-
-    public void Ground(Vector2 normal)
+    public void UpdateGroundedAngle(Vector2 normal)
     {
         var angle = Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg;
-        spriteRenderer_.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        playerTransform_.rotation = Quaternion.Euler(0, 0, angle - 90);
+    }
+
+    public void Jump(Vector2 jumpDirection)
+    {
+        var angle = Mathf.Atan2(jumpDirection.y, jumpDirection.x) * Mathf.Rad2Deg;
+        StartCoroutine("keepJumpAngle", angle);
+    }
+
+    private IEnumerator keepJumpAngle(float angle)
+    {
+        while (true)
+        {   
+            playerTransform_.rotation = Quaternion.Euler(0, 0, angle - 90);
+            yield return null;
+        }
     }
 }

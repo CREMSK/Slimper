@@ -3,12 +3,19 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 public class PlayerCursor : MonoBehaviour
 {
+    void Awake()
+    {
+        Cursor.visible = false;
+    }
     void Update()
     {
-        Vector3 mousePos = Mouse.current.position.ReadValue();
-        mousePos.z = Camera.main.nearClipPlane;
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(mousePos);
+        transform.position = getMouseWorldPos();
+    }
+    private Vector2 getMouseWorldPos()
+    {
+        Vector3 mousePosition = Mouse.current.position.ReadValue();
+        Vector2 mouseWorldPosition = (Vector2)Camera.main.ScreenToWorldPoint(mousePosition);
 
-        transform.position = mouseWorldPos;
+        return mouseWorldPosition;
     }
 }

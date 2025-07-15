@@ -2,10 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerInputSystem : IPlayerInput
+public class PlayerInputSystem
 {
     public event Action onJumpStart;
-    public event Action onJumpEnd;
+    public event Action<Vector2> onJumpEnd;
 
     private InputSystem_Actions inputActions_;
 
@@ -26,8 +26,7 @@ public class PlayerInputSystem : IPlayerInput
         inputActions_.Player.ChargeJump.started -= startJump;
         inputActions_.Player.ChargeJump.canceled -= endJump;
     }
-
-    public Vector2 GetMouseWorldPos()
+    private Vector2 getMouseWorldPos()
     {
         Vector3 mousePosition = Mouse.current.position.ReadValue();
         Vector2 mouseWorldPosition = (Vector2)Camera.main.ScreenToWorldPoint(mousePosition);
@@ -35,11 +34,12 @@ public class PlayerInputSystem : IPlayerInput
         return mouseWorldPosition;
     }
 
-    private void startJump(InputAction.CallbackContext context) {
+    private void startJump(InputAction.CallbackContext context)
+    {
         onJumpStart?.Invoke();
     }
     
     private void endJump(InputAction.CallbackContext context) {
-        onJumpEnd?.Invoke();
+        onJumpEnd?.Invoke(getMouseWorldPos());
     }
 }
