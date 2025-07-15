@@ -17,8 +17,16 @@ public class PlayerMovementSystem : MonoBehaviour
         }
     }
 
-    // used properties
+    // variables
     private float rawCharge_;
+    private bool _isGrounded;
+    private bool _isCharging;
+    private Vector2 contactPoint_;
+    private float maxJumpAngle_ = 70f;
+    private int minCharge_ = 4;
+    private int maxCharge_ = 12;
+
+    // properties
     private float charge_
     {
         get
@@ -28,10 +36,9 @@ public class PlayerMovementSystem : MonoBehaviour
         set
         {
             rawCharge_ = value;
-            onChargeUpdate?.Invoke((int)math.round(value * (maxCharge_- minCharge_)) + minCharge_);
+            onChargeUpdate?.Invoke((int)math.round(value * (maxCharge_ - minCharge_)) + minCharge_);
         }
     }
-    private bool _isGrounded;
     private bool isGrounded_
     {
         get { return _isGrounded; }
@@ -52,8 +59,6 @@ public class PlayerMovementSystem : MonoBehaviour
             onGroundedUpdate?.Invoke(value);
         }
     }
-
-    private bool _isCharging;
     private bool isCharging_
     {
         get { return _isCharging; }
@@ -63,13 +68,6 @@ public class PlayerMovementSystem : MonoBehaviour
             onChargingUpdate?.Invoke(value);
         }
     }
-
-    private Vector2 contactPoint_;
-
-    // setting properties
-    private float maxJumpAngle_ = 70f;
-    private int minCharge_ = 4;
-    private int maxCharge_ = 12;
 
     // events
     public event Action<int> onChargeUpdate;
@@ -81,15 +79,18 @@ public class PlayerMovementSystem : MonoBehaviour
 
     // collision functions
     void OnCollisionEnter2D(Collision2D collision)
-    {   
+    {
         isGrounded_ = true;
     }
     void OnCollisionStay2D(Collision2D collision)
     {
-        contactPoint_ = collision.GetContact(0).point;  
+        if (!isGrounded_)
+        {
+            return;
+        }
 
-        var normal = ((Vector2)transform.position - contactPoint_).normalized;
-        onContactPointUpdate?.Invoke(normal);
+        contactPoint_ = collision.GetContact(0).point;  
+        onContactPointUpdate?.Invoke(getNormal());
     }
     void OnCollisionExit2D(Collision2D collision)
     {
@@ -117,6 +118,7 @@ public class PlayerMovementSystem : MonoBehaviour
             return;
         }
 
+        isGrounded_ = false;
         var jumpDirection = GetJumpDirection(mouseWorldPosition);
         playerRigidBody_.AddForce(jumpDirection * charge, ForceMode2D.Impulse);
 
@@ -144,11 +146,15 @@ public class PlayerMovementSystem : MonoBehaviour
 
         return directionToMouse.normalized;
     }
+    private Vector2 getNormal()
+    {
+        return ((Vector2)transform.position - contactPoint_).normalized;
+    }
     private Vector2 GetJumpDirection(Vector2 mouseWorldPosition)
     {
         var directionToMouse = GetDirectionToMouse(mouseWorldPosition);
 
-        var normal = ((Vector2)transform.position - contactPoint_).normalized;
+        var normal = getNormal();
         var tangent = new Vector2(-normal.y, normal.x);
 
         float up = Vector2.Dot(directionToMouse, normal);

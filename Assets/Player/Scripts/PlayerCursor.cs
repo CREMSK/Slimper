@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 public class PlayerCursor : MonoBehaviour
 {
-    void Awake()
+    void Start()
     {
         Cursor.visible = false;
     }
