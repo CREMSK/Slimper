@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Mathematics;
 using UnityEngine;
@@ -22,6 +23,7 @@ public class PlayerMovementSystem : MonoBehaviour
     private float rawCharge_;
     private bool _isGrounded;
     private bool _isCharging;
+    private bool ignoreGround_;
     private Vector2 contactPoint_;
     private float maxJumpAngle_ = 70f;
     private int minCharge_ = 4;
@@ -82,14 +84,22 @@ public class PlayerMovementSystem : MonoBehaviour
     {
         isGrounded_ = true;
     }
+
     void OnCollisionStay2D(Collision2D collision)
     {
-        if (!isGrounded_)
+        if (ignoreGround_)
         {
             return;
         }
 
-        contactPoint_ = collision.GetContact(0).point;  
+        isGrounded_ = true; 
+        Vector2 contactPointsSum = Vector2.zero;
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            contactPointsSum += collision.GetContact(i).point;
+        }
+        contactPoint_ = contactPointsSum/collision.contactCount;
+        
         onContactPointUpdate?.Invoke(getNormal());
     }
     void OnCollisionExit2D(Collision2D collision)
@@ -97,7 +107,6 @@ public class PlayerMovementSystem : MonoBehaviour
         isGrounded_ = false;
         isCharging_ = false;
     }
-
 
     // JUMP FUNCTIONS
     public void StartJump()
@@ -107,7 +116,7 @@ public class PlayerMovementSystem : MonoBehaviour
     }
     public void Jump(Vector2 mouseWorldPosition)
     {
-        var charge = (int)math.round(charge_ * (maxCharge_- minCharge_)) + minCharge_;
+        var charge = (int)math.round(charge_ * (maxCharge_ - minCharge_)) + minCharge_;
         isCharging_ = false;
 
         StopCoroutine("increaseCharge");
@@ -123,6 +132,7 @@ public class PlayerMovementSystem : MonoBehaviour
         playerRigidBody_.AddForce(jumpDirection * charge, ForceMode2D.Impulse);
 
         onPlayerJump?.Invoke(jumpDirection);
+        StartCoroutine("ignoreGroundCounter", 20);
     }
     private IEnumerator increaseCharge()
     {
@@ -136,6 +146,19 @@ public class PlayerMovementSystem : MonoBehaviour
             charge_ = math.clamp(charge_ + Time.deltaTime * 2, 0, 1);
             yield return null;
         }
+    }
+
+    private IEnumerator ignoreGroundCounter(int frames)
+    {
+        ignoreGround_ = true;
+
+        while (frames > 0)
+        {
+            frames--;
+            yield return null;
+        }
+
+        ignoreGround_ = false;
     }
 
     // HELPER FUNCTIONS
