@@ -24,6 +24,7 @@ public class PlayerMovementSystem : MonoBehaviour
     private bool _isGrounded;
     private bool _isCharging;
     private bool ignoreGround_;
+    private bool isDying_;
     private Vector2 contactPoint_;
     private float maxJumpAngle_ = 70f;
     private int minCharge_ = 4;

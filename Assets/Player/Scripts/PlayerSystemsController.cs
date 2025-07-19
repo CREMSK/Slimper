@@ -1,6 +1,7 @@
+using System;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IMortal
 {
     [SerializeField] private Rigidbody2D playerRigidBody_;
     [SerializeField] private Animator playerAnimator_;
@@ -8,6 +9,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerMovementSystem playerMovementSystem_;
     [SerializeField] private PlayerAnimationSystem playerAnimationSystem_;
     private PlayerInputSystem playerInputSystem_;
+
+    // events
+    public event Action onPlayerDeath;
 
     void Awake()
     {
@@ -19,7 +23,7 @@ public class PlayerController : MonoBehaviour
             playerAnimationSystem_.PlayerTransform = transform;
             playerAnimationSystem_.PlayerSpriteTransform = playerSpriteTransform_;
         }
-        
+
         if (playerMovementSystem_ != null)
         {
             playerMovementSystem_.PlayerRigidBody = playerRigidBody_;
@@ -33,7 +37,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
-        Unsubscribe();        
+        Unsubscribe();
     }
 
     private void Subscribe()
@@ -61,12 +65,17 @@ public class PlayerController : MonoBehaviour
             playerMovementSystem_.onChargingUpdate -= playerAnimationSystem_.SetCharging;
             playerMovementSystem_.onContactPointUpdate -= playerAnimationSystem_.UpdateGroundedAngle;
             playerMovementSystem_.onPlayerJump -= playerAnimationSystem_.Jump;
-            }
+        }
 
         if (playerMovementSystem_ != null)
         {
             playerInputSystem_.onJumpStart -= playerMovementSystem_.StartJump;
             playerInputSystem_.onJumpEnd -= playerMovementSystem_.Jump;
         }
+    }
+
+    public void Die()
+    {
+        onPlayerDeath?.Invoke();
     }
 }
