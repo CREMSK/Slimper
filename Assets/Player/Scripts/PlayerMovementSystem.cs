@@ -12,7 +12,7 @@ public class PlayerMovementSystem : MonoBehaviour
     private Rigidbody2D playerRigidBody_;
     public Rigidbody2D PlayerRigidBody
     {
-        private get{ return playerRigidBody_; }
+        private get { return playerRigidBody_; }
         set
         {
             playerRigidBody_ = value;
@@ -28,6 +28,7 @@ public class PlayerMovementSystem : MonoBehaviour
     private float maxJumpAngle_ = 70f;
     private int minCharge_ = 4;
     private int maxCharge_ = 12;
+    private int ignoreGroundFrames_ = 15;
 
     // properties
     private float charge_
@@ -83,6 +84,10 @@ public class PlayerMovementSystem : MonoBehaviour
     void OnCollisionEnter2D(Collision2D collision)
     {
         isGrounded_ = true;
+        updateContactPoint(collision);
+
+        var coroutine = magnetizeToCollisionPoint(contactPoint_);
+        StartCoroutine(coroutine);
     }
 
     void OnCollisionStay2D(Collision2D collision)
@@ -92,14 +97,9 @@ public class PlayerMovementSystem : MonoBehaviour
             return;
         }
 
-        isGrounded_ = true; 
-        Vector2 contactPointsSum = Vector2.zero;
-        for (int i = 0; i < collision.contactCount; i++)
-        {
-            contactPointsSum += collision.GetContact(i).point;
-        }
-        contactPoint_ = contactPointsSum/collision.contactCount;
-        
+        isGrounded_ = true;
+        updateContactPoint(collision);
+
         onContactPointUpdate?.Invoke(getNormal());
     }
     void OnCollisionExit2D(Collision2D collision)
@@ -118,8 +118,6 @@ public class PlayerMovementSystem : MonoBehaviour
     {
         var charge = (int)math.round(charge_ * (maxCharge_ - minCharge_)) + minCharge_;
         isCharging_ = false;
-
-        StopCoroutine("increaseCharge");
         charge_ = 0;
 
         if (!isGrounded_)
@@ -132,7 +130,7 @@ public class PlayerMovementSystem : MonoBehaviour
         playerRigidBody_.AddForce(jumpDirection * charge, ForceMode2D.Impulse);
 
         onPlayerJump?.Invoke(jumpDirection);
-        StartCoroutine("ignoreGroundCounter", 20);
+        StartCoroutine("ignoreGroundCounter", ignoreGroundFrames_);
     }
     private IEnumerator increaseCharge()
     {
@@ -159,6 +157,16 @@ public class PlayerMovementSystem : MonoBehaviour
         }
 
         ignoreGround_ = false;
+    }
+
+    private IEnumerator magnetizeToCollisionPoint(Vector2 point)
+    {
+        while (isGrounded_)
+        {
+            var direction = (point - (Vector2)transform.position).normalized;
+            playerRigidBody_.AddForce(direction, ForceMode2D.Force);
+            yield return null;
+        }
     }
 
     // HELPER FUNCTIONS
@@ -195,5 +203,16 @@ public class PlayerMovementSystem : MonoBehaviour
 
         var clampedDir = limitCos * normal + clampedAlong * tangent;
         return clampedDir.normalized;
+    }
+
+    private Vector2 updateContactPoint(Collision2D collision) {
+        Vector2 contactPointsSum = Vector2.zero;
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            contactPointsSum += collision.GetContact(i).point;
+        }
+        contactPoint_ = contactPointsSum / collision.contactCount;
+
+        return contactPoint_;
     }
 }
