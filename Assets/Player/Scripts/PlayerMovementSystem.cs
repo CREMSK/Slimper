@@ -84,16 +84,18 @@ public class PlayerMovementSystem : MonoBehaviour
     // collision functions
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (isDying_)
+        {
+            return;
+        }
+
         isGrounded_ = true;
         updateContactPoint(collision);
-
-        var coroutine = magnetizeToCollisionPoint(contactPoint_);
-        StartCoroutine(coroutine);
     }
 
     void OnCollisionStay2D(Collision2D collision)
     {
-        if (ignoreGround_)
+        if (ignoreGround_ || isDying_)
         {
             return;
         }
@@ -105,6 +107,11 @@ public class PlayerMovementSystem : MonoBehaviour
     }
     void OnCollisionExit2D(Collision2D collision)
     {
+        if (isDying_)
+        {
+            return;
+        }
+
         isGrounded_ = false;
         isCharging_ = false;
     }
@@ -135,7 +142,7 @@ public class PlayerMovementSystem : MonoBehaviour
     }
     private IEnumerator increaseCharge()
     {
-        while (isCharging_)
+        while (isCharging_ && !isDying_)
         {
             if (!isGrounded_)
             {
@@ -158,16 +165,6 @@ public class PlayerMovementSystem : MonoBehaviour
         }
 
         ignoreGround_ = false;
-    }
-
-    private IEnumerator magnetizeToCollisionPoint(Vector2 point)
-    {
-        while (isGrounded_)
-        {
-            var direction = (point - (Vector2)transform.position).normalized;
-            playerRigidBody_.AddForce(direction, ForceMode2D.Force);
-            yield return null;
-        }
     }
 
     // HELPER FUNCTIONS
@@ -206,7 +203,8 @@ public class PlayerMovementSystem : MonoBehaviour
         return clampedDir.normalized;
     }
 
-    private Vector2 updateContactPoint(Collision2D collision) {
+    private Vector2 updateContactPoint(Collision2D collision)
+    {
         Vector2 contactPointsSum = Vector2.zero;
         for (int i = 0; i < collision.contactCount; i++)
         {
@@ -215,5 +213,36 @@ public class PlayerMovementSystem : MonoBehaviour
         contactPoint_ = contactPointsSum / collision.contactCount;
 
         return contactPoint_;
+    }
+
+    public void Die(Vector2 point)
+    {
+        Debug.Log(point);
+        Debug.Log(transform.position);
+
+        isDying_ = true;
+
+        isGrounded_ = false;
+        isCharging_ = false;
+
+        Debug.DrawRay(point, Vector3.up * 0.1f, Color.red, 1f);
+
+        var dir = ((Vector2)transform.position - point).normalized;
+        playerRigidBody_.gravityScale = 0;
+
+        playerRigidBody_.linearVelocity = dir * 1;
+        StartCoroutine("deathRoutine");
+    }
+
+    private IEnumerator deathRoutine()
+    {
+        while (playerRigidBody_.linearVelocity.magnitude > 0)
+        {
+            playerRigidBody_.linearVelocity -= playerRigidBody_.linearVelocity * Time.deltaTime * 2;
+
+            yield return true;
+        }
+
+        playerRigidBody_.linearVelocity = Vector2.zero;
     }
 }

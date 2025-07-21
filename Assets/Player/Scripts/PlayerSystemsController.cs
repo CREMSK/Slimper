@@ -1,13 +1,15 @@
 using System;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IMortal
+public class PlayerSystemsController : MonoBehaviour, IMortal
 {
     [SerializeField] private Rigidbody2D playerRigidBody_;
     [SerializeField] private Animator playerAnimator_;
     [SerializeField] private Transform playerSpriteTransform_;
     [SerializeField] private PlayerMovementSystem playerMovementSystem_;
     [SerializeField] private PlayerAnimationSystem playerAnimationSystem_;
+    [SerializeField] private PlayerDeathSystem playerDeathSystem_;
+
     private PlayerInputSystem playerInputSystem_;
 
     // events
@@ -74,8 +76,11 @@ public class PlayerController : MonoBehaviour, IMortal
         }
     }
 
-    public void Die()
+    public void Die(Vector2 point)
     {
         onPlayerDeath?.Invoke();
+
+        playerMovementSystem_.Die(point);
+        playerDeathSystem_.Die();
     }
 }
