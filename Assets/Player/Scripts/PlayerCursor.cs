@@ -10,11 +10,13 @@ public class PlayerCursor : MonoBehaviour
     void Update()
     {
         transform.position = getMouseWorldPos();
+
+        transform.position = new Vector3(transform.position.x, transform.position.y, -2);
     }
     private Vector2 getMouseWorldPos()
     {
         Vector3 mousePosition = Mouse.current.position.ReadValue();
-        Vector2 mouseWorldPosition = (Vector2)Camera.main.ScreenToWorldPoint(mousePosition);
+        Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
 
         return mouseWorldPosition;
     }
