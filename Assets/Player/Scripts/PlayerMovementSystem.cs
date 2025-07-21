@@ -217,15 +217,10 @@ public class PlayerMovementSystem : MonoBehaviour
 
     public void Die(Vector2 point)
     {
-        Debug.Log(point);
-        Debug.Log(transform.position);
-
         isDying_ = true;
 
         isGrounded_ = false;
         isCharging_ = false;
-
-        Debug.DrawRay(point, Vector3.up * 0.1f, Color.red, 1f);
 
         var dir = ((Vector2)transform.position - point).normalized;
         playerRigidBody_.gravityScale = 0;
