@@ -57,13 +57,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: cursor
       objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: a522777bedb7c99ff9c8590474af6245, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 6554736390298987251, guid: e134cf7ecf605a57d804d257400db5c2, type: 3}
     - target: {fileID: 7878350319992209165, guid: a522777bedb7c99ff9c8590474af6245, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: a522777bedb7c99ff9c8590474af6245, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.125
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: a522777bedb7c99ff9c8590474af6245, type: 3}
       propertyPath: m_LocalPosition.z
