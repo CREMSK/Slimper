@@ -1,0 +1,86 @@
+using System;
+using UnityEngine;
+
+public class PlayerSystemsController : MonoBehaviour, IMortal
+{
+    [SerializeField] private Rigidbody2D playerRigidBody_;
+    [SerializeField] private Animator playerAnimator_;
+    [SerializeField] private Transform playerSpriteTransform_;
+    [SerializeField] private PlayerMovementSystem playerMovementSystem_;
+    [SerializeField] private PlayerAnimationSystem playerAnimationSystem_;
+    [SerializeField] private PlayerDeathSystem playerDeathSystem_;
+
+    private PlayerInputSystem playerInputSystem_;
+
+    // events
+    public event Action onPlayerDeath;
+
+    void Awake()
+    {
+        playerInputSystem_ = new PlayerInputSystem();
+
+        if (playerAnimationSystem_ != null)
+        {
+            playerAnimationSystem_.PlayerAnimator = playerAnimator_;
+            playerAnimationSystem_.PlayerTransform = transform;
+            playerAnimationSystem_.PlayerSpriteTransform = playerSpriteTransform_;
+        }
+
+        if (playerMovementSystem_ != null)
+        {
+            playerMovementSystem_.PlayerRigidBody = playerRigidBody_;
+        }
+    }
+
+    void OnEnable()
+    {
+        Subscribe();
+    }
+
+    void OnDisable()
+    {
+        Unsubscribe();
+    }
+
+    private void Subscribe()
+    {
+        if (playerAnimationSystem_ != null)
+        {
+            playerMovementSystem_.onGroundedUpdate += playerAnimationSystem_.SetGrounded;
+            playerMovementSystem_.onChargingUpdate += playerAnimationSystem_.SetCharging;
+            playerMovementSystem_.onContactPointUpdate += playerAnimationSystem_.UpdateGroundedAngle;
+            playerMovementSystem_.onPlayerJump += playerAnimationSystem_.Jump;
+        }
+
+        if (playerMovementSystem_ != null)
+        {
+            playerInputSystem_.onJumpStart += playerMovementSystem_.StartJump;
+            playerInputSystem_.onJumpEnd += playerMovementSystem_.Jump;
+        }
+    }
+
+    private void Unsubscribe()
+    {
+        if (playerAnimationSystem_ != null)
+        {
+            playerMovementSystem_.onGroundedUpdate -= playerAnimationSystem_.SetGrounded;
+            playerMovementSystem_.onChargingUpdate -= playerAnimationSystem_.SetCharging;
+            playerMovementSystem_.onContactPointUpdate -= playerAnimationSystem_.UpdateGroundedAngle;
+            playerMovementSystem_.onPlayerJump -= playerAnimationSystem_.Jump;
+        }
+
+        if (playerMovementSystem_ != null)
+        {
+            playerInputSystem_.onJumpStart -= playerMovementSystem_.StartJump;
+            playerInputSystem_.onJumpEnd -= playerMovementSystem_.Jump;
+        }
+    }
+
+    public void Die(Vector2 point)
+    {
+        onPlayerDeath?.Invoke();
+
+        playerMovementSystem_.Die(point);
+        playerDeathSystem_.Die();
+    }
+}
